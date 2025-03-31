@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: "${ENV_CONTAINER_NAME}"
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: "${ENV_USER}"
+      POSTGRES_PASSWORD: "${ENV_PASSWORD}"
+      POSTGRES_DB: "${ENV_DB_NAME}"
+      ENV_POSTGRES_LISTEN: "${ENV_POSTGRES_LISTEN}"
+    ports:
+      - "${ENV_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  
+      - ./init-scripts:/docker-entrypoint-initdb.d 
+
+volumes:
+  postgres_data:
