@@ -4,3 +4,4 @@ flask-migrate
 dotenv
 psycopg2-binary
 apscheduler
+google-cloud-secret-manager

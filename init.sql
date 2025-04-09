@@ -15,3 +15,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_url_short_btree ON url_mappings(short_url)
 -- Add separate hash indexes for constant-time lookups
 CREATE INDEX IF NOT EXISTS idx_url_original_hash ON url_mappings USING hash(original_url);
 CREATE INDEX IF NOT EXISTS idx_url_short_hash ON url_mappings USING hash(short_url);
+

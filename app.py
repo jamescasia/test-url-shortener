@@ -3,14 +3,26 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from sqlalchemy import text
 from datetime import datetime, timedelta
+from utils import get_secret
 import random
-app = Flask(__name__)
-
 import os
 from dotenv import load_dotenv
 
+app = Flask(__name__)
+
+
 load_dotenv()
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+
+CLOUDSQL_CONNECTION_NAME = os.getenv('CLOUDSQL_CONNECTION_NAME')
+DB_USER = os.getenv('DB_USER')
+DB_PASSWORD = get_secret('DB_PASSWORD')
+DB_NAME = os.getenv('DB_NAME')
+
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@/"
+    f"{DB_NAME}?host=/cloudsql/{CLOUDSQL_CONNECTION_NAME}"
+)
+#app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@/cloudsql/{CLOUDSQL_CONNECTION_NAME}/{DB_NAME}'
 # Initialize the database and migration
 TABLE_NAME = 'url_mappings'
 db = SQLAlchemy(app)
@@ -114,4 +126,4 @@ scheduler.start()
 
 if __name__ == '__main__':
     
-    app.run(debug=True,port = 5001) 
+    app.run(debug=True,port = 8080,host = '0.0.0.0') 

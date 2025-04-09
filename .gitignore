@@ -1,3 +1,4 @@
 *.db
 *.env
 devlog.md
+*__pycache__
