@@ -106,9 +106,9 @@ def redirect_to_long_url(short_url):
 from apscheduler.schedulers.background import BackgroundScheduler
 
 def delete_old_urls():
-    """Deletes URLs older than 48 hours."""
+    """Deletes URLs older than 60 days"""
     with app.app_context():  # Ensure the function runs within Flask's application context
-        time_threshold = datetime.utcnow() - timedelta(hours=48)
+        time_threshold = datetime.utcnow() - timedelta(days=60)
 
         try:
             with db.engine.connect() as conn:
