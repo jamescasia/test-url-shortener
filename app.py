@@ -7,9 +7,11 @@ from utils import get_secret
 import random
 import os
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 app = Flask(__name__)
 
+CORS(app, origins=[  "http://localhost:3000", "http://urly.jamescasia.com",  "https://urly.jamescasia.com"] )
 
 load_dotenv()
 
