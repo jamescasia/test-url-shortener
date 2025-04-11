@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect
+from flask import Flask, request, jsonify, redirect, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from sqlalchemy import text
@@ -19,6 +19,8 @@ CLOUDSQL_CONNECTION_NAME = os.getenv('CLOUDSQL_CONNECTION_NAME')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = get_secret('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
+DELETER_USERNAME = os.getenv('DELETER_USERNAME')
+DELETER_PASSWORD = os.getenv('DELETER_PASSWORD')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = (
     f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@/"
@@ -104,13 +106,31 @@ def redirect_to_long_url(short_url):
         return  jsonify({'error': 'URL not found'}), 404
 
 
+def check_auth(username, password):
+    return username == DELETER_USERNAME and password == DELETER_PASSWORD
 
-from apscheduler.schedulers.background import BackgroundScheduler
+def authenticate():
+    return Response(
+        'Could not verify your access level for that URL.\n'
+        'You have to login with proper credentials.', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'})
 
+def requires_auth(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/urls/clear', methods = ['DELETE'])
+@requires_auth
 def delete_old_urls():
     """Deletes URLs older than 60 days"""
     with app.app_context():  # Ensure the function runs within Flask's application context
-        time_threshold = datetime.utcnow() - timedelta(days=60)
+        time_threshold = datetime.utcnow() - timedelta(hours=1)
 
         try:
             with db.engine.connect() as conn:
@@ -121,9 +141,6 @@ def delete_old_urls():
         except Exception as e:
             print(f"Error deleting old URLs: {e}")
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(delete_old_urls, 'interval', hours=12)
-scheduler.start()
 
 
 if __name__ == '__main__':
