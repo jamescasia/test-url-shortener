@@ -130,9 +130,9 @@ def redirect_to_long_url(short_url):
 @app.route('/urls/clear', methods = ['DELETE'])
 @requires_auth
 def delete_old_urls():
-    """Deletes URLs older than 60 days"""
+    """Deletes URLs older than 30 days"""
     with app.app_context():  # Ensure the function runs within Flask's application context
-        time_threshold = datetime.utcnow() - timedelta(hours=1)
+        time_threshold = datetime.utcnow() - timedelta(days=30)
 
         try:
             with db.engine.connect() as conn:
