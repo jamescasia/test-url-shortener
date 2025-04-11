@@ -138,10 +138,14 @@ def delete_old_urls():
             with db.engine.connect() as conn:
                 result = conn.execute(text(f"DELETE FROM {TABLE_NAME} WHERE created_at < :time_threshold"), 
                                       {"time_threshold": time_threshold})
-                conn.commit()
-                print(f"Deleted {result.rowcount} old URLs.")
+                conn.commit() 
+
+
+                return jsonify({'message': f"Deleted {result.rowcount} old URLs."}), 200
+
         except Exception as e:
-            print(f"Error deleting old URLs: {e}")
+
+            return jsonify({'message': f"Error deleting old URLs: {e}"}), 500 
 
 
 
