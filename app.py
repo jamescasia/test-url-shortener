@@ -19,8 +19,8 @@ CLOUDSQL_CONNECTION_NAME = os.getenv('CLOUDSQL_CONNECTION_NAME')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = get_secret('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
-DELETER_USERNAME = os.getenv('DELETER_USERNAME')
-DELETER_PASSWORD = os.getenv('DELETER_PASSWORD')
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = (
     f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@/"
@@ -40,6 +40,24 @@ class Url(db.Model):
     short_url = db.Column(db.String(6), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, nullable = False)
  
+def check_auth(username, password):
+    return username == ADMIN_USERNAME and password == ADMIN_PASSWORD
+
+def authenticate():
+    return Response(
+        'Could not verify your access level for that URL.\n'
+        'You have to login with proper credentials.', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+def requires_auth(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
 
 def shorten(length = 7): 
 
@@ -59,6 +77,8 @@ def shorten(length = 7):
 
 
 @app.route('/urls', methods=['GET'])
+@requires_auth
+
 def get_Urls():
     urls = Url.query.all()
     urls_list = [{"id": url.id, "original_url": url.original_url, "short_url": url.short_url, "created_at": url.created_at} for url in urls]
@@ -106,24 +126,6 @@ def redirect_to_long_url(short_url):
         return  jsonify({'error': 'URL not found'}), 404
 
 
-def check_auth(username, password):
-    return username == DELETER_USERNAME and password == DELETER_PASSWORD
-
-def authenticate():
-    return Response(
-        'Could not verify your access level for that URL.\n'
-        'You have to login with proper credentials.', 401,
-        {'WWW-Authenticate': 'Basic realm="Login Required"'})
-
-def requires_auth(f):
-    from functools import wraps
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
-        return f(*args, **kwargs)
-    return decorated
 
 @app.route('/urls/clear', methods = ['DELETE'])
 @requires_auth
