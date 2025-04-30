@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 8080
 
 # Command to run the app
-CMD ["python3", "app.py"]
+CMD ["gunicorn", "-w", "1", "-k", "gthread","-t", "60", "--threads", "10", "-b", "0.0.0.0:8080", "app:app"]

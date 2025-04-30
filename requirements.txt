@@ -6,3 +6,4 @@ psycopg2-binary
 apscheduler
 google-cloud-secret-manager
 flask-cors
+gunicorn

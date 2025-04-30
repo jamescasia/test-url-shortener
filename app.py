@@ -18,15 +18,32 @@ load_dotenv()
 CLOUDSQL_CONNECTION_NAME = os.getenv('CLOUDSQL_CONNECTION_NAME')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = get_secret('DB_PASSWORD')
+DB_SUPABASE_PASSWORD= get_secret('DB_SUPABASE_PASSWORD')
+DB_SUPABASE_USER= get_secret('DB_SUPABASE_USER')
 DB_NAME = os.getenv('DB_NAME')
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 
+# supa base
 app.config['SQLALCHEMY_DATABASE_URI'] = (
-    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@/"
-    f"{DB_NAME}?host=/cloudsql/{CLOUDSQL_CONNECTION_NAME}"
+    f"postgresql+psycopg2://{DB_SUPABASE_USER}:{DB_SUPABASE_PASSWORD}"
+    "@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
 )
-#app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@/cloudsql/{CLOUDSQL_CONNECTION_NAME}/{DB_NAME}'
+# cloud sql
+# app.config['SQLALCHEMY_DATABASE_URI'] = (
+#     f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@/"
+#     f"{DB_NAME}?host=/cloudsql/{CLOUDSQL_CONNECTION_NAME}"
+# )
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 10,
+    'max_overflow': 0,
+    'pool_timeout': 30,
+    'pool_recycle': 1800
+}
+
+
 # Initialize the database and migration
 TABLE_NAME = 'url_mappings'
 db = SQLAlchemy(app)
@@ -58,6 +75,11 @@ def requires_auth(f):
             return authenticate()
         return f(*args, **kwargs)
     return decorated
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()
+
 
 def shorten(length = 7): 
 
